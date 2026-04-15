@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { Property } from '@/types';
+import 'leaflet/dist/leaflet.css';
 
 interface CommandCenterProps {
   properties: Property[];

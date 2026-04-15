@@ -7,6 +7,7 @@ import ProviderDash from '@/components/ProviderDash';
 import CommandCenter from '@/components/CommandCenter';
 import ProductDashboard from '@/components/ProductDashboard';
 import FinanceModal from '@/components/FinanceModal';
+import CTOLoginModal from '@/components/CTOLoginModal';
 import { Property, Language } from '@/types';
 
 type View = 'shop' | 'subscribe' | 'cc';
@@ -55,6 +56,7 @@ export default function HomePage() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [financeType, setFinanceType] = useState('');
   const [financePropertyId, setFinancePropertyId] = useState('');
+  const [showCTOLogin, setShowCTOLogin] = useState(false);
   const [category, setCategory] = useState('All');
   const [sortOrder, setSortOrder] = useState('default');
   const [transFilter, setTransFilter] = useState('all');
@@ -109,9 +111,17 @@ export default function HomePage() {
   };
 
   const handleCCLogin = () => {
-    const pwd = window.prompt('Enter Admin Code:');
-    if (pwd !== null) setView('cc');
-    else setView('shop');
+    setShowCTOLogin(true);
+  };
+
+  const handleCTOSuccess = () => {
+    setShowCTOLogin(false);
+    setView('cc');
+  };
+
+  const handleCTOCancel = () => {
+    setShowCTOLogin(false);
+    setView('shop');
   };
 
   return (
@@ -163,6 +173,13 @@ export default function HomePage() {
           financeType={financeType}
           propertyId={financePropertyId}
           onClose={() => setFinanceType('')}
+        />
+      )}
+
+      {showCTOLogin && (
+        <CTOLoginModal
+          onSuccess={handleCTOSuccess}
+          onCancel={handleCTOCancel}
         />
       )}
     </>
