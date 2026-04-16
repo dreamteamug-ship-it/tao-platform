@@ -1,75 +1,73 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Language } from '@/types';
 
 interface HeaderProps {
-  lang: Language;
-  setLang: (l: Language) => void;
+  lang: string;
+  setLang: (lang: string) => void;
   currentView: string;
   onNavShop: () => void;
   onNavSubscribe: () => void;
   onNavCC: () => void;
 }
 
-export default function Header(
+export default function Header({ lang, setLang, currentView, onNavShop, onNavSubscribe, onNavCC }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-{ lang, setLang, currentView, onNavShop, onNavSubscribe, onNavCC }: HeaderProps) {
+
+  const countries = [
+    { code: 'KE', name: 'Kenya', flag: '🇰🇪' },
+    { code: 'UG', name: 'Uganda', flag: '🇺🇬' },
+    { code: 'ZA', name: 'South Africa', flag: '🇿🇦' },
+    { code: 'RW', name: 'Rwanda', flag: '🇷🇼' }
+  ];
+
   return (
-    <header style={{
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
-      background: 'rgba(5,10,16,0.96)', backdropFilter: 'blur(20px)',
+    <header style={{ 
+      padding: '1rem 2rem', 
+      background: '#0a0a0a', 
       borderBottom: '1px solid rgba(212,175,55,0.2)',
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 20px', height: 64,
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
     }}>
-      {/* Brand */}
-      <button onClick={onNavShop} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ fontFamily: "'Cinzel', serif", fontSize: '1.25rem', fontWeight: 700 }}>
-          <span style={{ color: 'var(--gold)' }}>Together</span>
-          <em style={{ color: '#fff', fontStyle: 'italic' }}> As One</em>
-        </span>
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+        <h1 style={{ color: '#d4af37', margin: 0, fontSize: '1.5rem', fontWeight: '900', letterSpacing: '-0.05em' }}>
+          WONDERLAND HOSPITALITY
+        </h1>
+        
+        <nav style={{ display: 'flex', gap: '1.5rem', fontSize: '0.8rem', fontWeight: 'bold', color: '#888' }}>
+          <span onClick={onNavShop} style={{ cursor: 'pointer' }}>MARKETPLACE</span>
+          <span onClick={onNavSubscribe} style={{ cursor: 'pointer' }}>SUBSCRIPTIONS</span>
+          <span onClick={onNavCC} style={{ cursor: 'pointer' }}>CONTACT</span>
+        </nav>
+      </div>
 
-      {/* Navigation Links */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap' }}>
-        <button onClick={onNavShop}
-          style={{ background: 'none', border: 'none', color: currentView === 'shop' ? 'var(--gold)' : 'var(--silver)', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, fontSize: '0.85rem', fontWeight: currentView === 'shop' ? 700 : 400 }}>
-          <i className="fas fa-store" style={{ marginRight: 6 }} />Shop
-        </button>
-        <a href="/vehicles" style={{ color: 'var(--silver)', textDecoration: 'none', padding: '6px 12px', fontSize: '0.85rem', borderRadius: 8 }}>
-          <i className="fas fa-car" style={{ marginRight: 6 }} />Vehicles
-        </a>
-        <a href="/services" style={{ color: 'var(--silver)', textDecoration: 'none', padding: '6px 12px', fontSize: '0.85rem', borderRadius: 8 }}>
-          <i className="fas fa-users" style={{ marginRight: 6 }} />Services
-        </a>
-        <a href="/finance/mortgage" style={{ color: 'var(--silver)', textDecoration: 'none', padding: '6px 12px', fontSize: '0.85rem', borderRadius: 8 }}>
-          <i className="fas fa-landmark" style={{ marginRight: 6 }} />Finance
-        </a>
-        <a href={`/dealroom/${Math.random().toString(36).slice(2,10).toUpperCase()}`}
-          style={{ color: 'var(--silver)', textDecoration: 'none', padding: '6px 12px', fontSize: '0.85rem', borderRadius: 8, border: '1px solid rgba(212,175,55,0.25)' }}>
-          <i className="fas fa-video" style={{ marginRight: 6, color: 'var(--gold)' }} />Dealroom
-        </a>
-        <button onClick={onNavSubscribe}
-          style={{ color: '#fff', background: 'linear-gradient(135deg, #0a4f2a, #1a7a3f)', border: 'none', padding: '8px 14px', borderRadius: 10, cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}>
-          <i className="fas fa-crown" style={{ marginRight: 6 }} />Post/Subscribe
-        </button>
-
-        {/* Language Switcher */}
-        <select value={lang} onChange={e => setLang(e.target.value as Language)}
-          style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid var(--border-gold)', color: 'var(--gold)', padding: '7px 10px', borderRadius: 8, fontSize: '0.82rem', cursor: 'pointer' }}>
-          <option value="en">ðŸŒ ENG</option>
-          <option value="sw">ðŸ‡°ðŸ‡ª SW</option>
-          <option value="sh">ðŸ”¥ SHG</option>
+      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <select 
+          value={lang} 
+          onChange={(e) => setLang(e.target.value)}
+          style={{ background: 'transparent', color: '#d4af37', border: 'none', cursor: 'pointer' }}
+        >
+          {countries.map(c => (
+            <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+          ))}
         </select>
-
-        {/* CTO Login */}
-        <button onClick={onNavCC}
-          style={{ background: 'rgba(212,175,55,0.15)', border: '1px solid var(--border-gold)', color: 'var(--gold)', padding: '8px 14px', borderRadius: 10, cursor: 'pointer', fontSize: '0.82rem', fontFamily: "'Share Tech Mono', monospace" }}>
-          <i className="fas fa-terminal" style={{ marginRight: 6 }} />CTO
-        </button>
-      </nav>
+        
+        <a 
+          href={mounted ? '/dealroom/' + Math.random().toString(36).substring(2, 10).toUpperCase() : '#'}
+          style={{
+            background: '#d4af37',
+            color: 'black',
+            padding: '0.5rem 1rem',
+            borderRadius: '4px',
+            fontSize: '0.75rem',
+            fontWeight: '900',
+            textDecoration: 'none'
+          }}
+        >
+          OPEN DEALROOM
+        </a>
+      </div>
     </header>
   );
 }
-
