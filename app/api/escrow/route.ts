@@ -82,6 +82,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'dealroomId and positive dealPrice are required' }, { status: 400 });
     }
 
+    // ── Double-Release Protection ─────────────────────────────
+    const supabase = createAdminClient();
+    const { data: existingLock } = await supabase
+      .from('escrow_transactions')
+      .select('id, status, locked_at')
+      .eq('dealroom_id', dealroomId)
+      .eq('status', 'locked')
+      .maybeSingle();
+
+    if (existingLock) {
+      return NextResponse.json({
+        error: 'DOUBLE_RELEASE_BLOCKED',
+        message: '🔒 This dealroom already has an active escrow lock. Double-release prevented.',
+        existingEscrowId: existingLock.id,
+        lockedAt: existingLock.locked_at,
+      }, { status: 409 });
+    }
+
     // ── Fee Calculations ──────────────────────────────────────
     const escrowReserveRate = 0.10;   // 10% reserve
     const saasRate = 0.005;           // 0.5% SaaS fee
@@ -100,7 +118,6 @@ export async function POST(req: NextRequest) {
     const saasKES   = convertToKES(saasAmount, currency);
 
     // ── Write to Supabase ─────────────────────────────────────
-    const supabase = createAdminClient();
     const sopSlot  = getSOPReportSlot();
     const now      = new Date().toISOString();
 

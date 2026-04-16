@@ -1,4 +1,5 @@
-﻿'use client';
+'use client';
+import { useEffect, useState } from 'react';
 import { Language } from '@/types';
 
 interface HeaderProps {
@@ -10,7 +11,10 @@ interface HeaderProps {
   onNavCC: () => void;
 }
 
-export default function Header({ lang, setLang, currentView, onNavShop, onNavSubscribe, onNavCC }: HeaderProps) {
+export default function Header(
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+{ lang, setLang, currentView, onNavShop, onNavSubscribe, onNavCC }: HeaderProps) {
   return (
     <header style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
