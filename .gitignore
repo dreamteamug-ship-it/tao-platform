@@ -35,3 +35,5 @@ yarn-error.log*
 next-env.d.ts
 
 deploy-phase*.ps1
+.vercel
+.env*.local
