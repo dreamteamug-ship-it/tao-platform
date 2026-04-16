@@ -1,1 +1,1 @@
-'use client'; export default function CTO() { return <div className='p-20 bg-titan text-gold'>CTO COMMAND CENTER: GOD MODE ACTIVE</div>; }
+'use client'; export default function CTO() { return <div className='p-20 bg-[#0B1426] text-[#D4AF37]'>CTO COMMAND CENTER: GOD MODE ACTIVE</div>; }
