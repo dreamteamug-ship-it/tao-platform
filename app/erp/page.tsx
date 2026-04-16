@@ -1,1 +1,1 @@
-'use client'; export default function ERP() { return <div className='p-20 bg-black text-[#D4AF37]'>TITANIUM HYBRID ERP: 14 MODULES ACTIVE (90/10 AI)</div>; }
+'use client'; export default function ERP() { return <div className='p-20 bg-black text-gold font-bold'>TITANIUM ERP: 14 MODULES ACTIVE</div>; }
