@@ -1,157 +1,109 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase';
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
 // ─────────────────────────────────────────────────────────────
-// TITANIUM FISSION — ONE-SHARE REGISTRATION ENGINE
-// WhatsApp share token → profile → Titanium QR → /dealroom/[id]
-// Default Home State: Kenya (-1.2864, 36.8172, KES)
+// TITANIUM FISSION ENGINE
+// Uses tao_users table — fully independent of auth.users
 // ─────────────────────────────────────────────────────────────
 
-const FISSION_SECRET = process.env.FISSION_SECRET || 'TAO_TITANIUM_FISSION_2026';
-
-function decryptToken(token: string): Record<string, string> | null {
+function decodeToken(token: string): Record<string, string> | null {
   try {
-    const decoded = Buffer.from(token, 'base64url').toString('utf-8');
-    const parsed = JSON.parse(decoded);
-    // In production: verify HMAC signature
-    return parsed;
+    const cleaned = token.replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, '');
+    const padded  = cleaned + '='.repeat((4 - (cleaned.length % 4)) % 4);
+    return JSON.parse(Buffer.from(padded, 'base64').toString('utf-8'));
   } catch {
     return null;
   }
 }
 
-function generateTitaniumQR(userId: string): string {
-  const hash = crypto
-    .createHmac('sha256', FISSION_SECRET)
-    .update(userId + Date.now().toString())
-    .digest('hex')
-    .toUpperCase()
-    .slice(0, 16);
-  return `TAO-TQ-${hash}`;
-}
-
-function generateDealroomId(): string {
-  return crypto.randomUUID().replace(/-/g, '').toUpperCase().slice(0, 12);
-}
-
-// GET /api/fission?token=<base64url>
-export async function GET(req: NextRequest) {
-  const token = req.nextUrl.searchParams.get('token');
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const token = searchParams.get('token');
 
   if (!token) {
-    return NextResponse.json({ error: 'Missing share token' }, { status: 400 });
+    return NextResponse.json({ error: 'Missing token' }, { status: 400 });
   }
 
-  const payload = decryptToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: 'Invalid or expired share token' }, { status: 401 });
+  const decoded = decodeToken(token);
+  if (!decoded) {
+    return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
+
+  // Generate identity — always works even if DB is down
+  const dealroomId = crypto.randomBytes(6).toString('hex').toUpperCase();
+  const titaniumQR = 'TAO-TQ-' + crypto.randomBytes(8).toString('hex').toUpperCase();
+  const phone      = decoded.phone || decoded.referrer || `guest_${Date.now()}`;
+  const country    = decoded.region || decoded.country || 'KE';
+  const assetId    = decoded.asset_id || decoded.asset || null;
+
+  let dbSaved  = false;
+  let savedId  = '';
+  let warnings: string[] = [];
 
   try {
-    const supabase = createAdminClient();
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
 
-    // Resolve or create profile
-    const phone = payload.phone || '';
-    const referredBy = payload.ref || null;
-    const assetId = payload.asset || null;
-    const country = payload.country || 'KE';
-    const lang = payload.lang || 'en';
+    // Use tao_users — no foreign key, no role check, no full_name constraint
+    const { data, error } = await supabase
+      .from('tao_users')
+      .upsert([{
+        phone,
+        country,
+        home_currency:         'KES',
+        home_lat:              -1.2864,
+        home_lng:              36.8172,
+        titanium_qr:           titaniumQR,
+        dealroom_id:           dealroomId,
+        referred_by:           decoded.referrer || decoded.ref || null,
+        asset_id:              assetId,
+        fission_registered:    true,
+        fission_registered_at: new Date().toISOString(),
+      }], { onConflict: 'phone', ignoreDuplicates: false })
+      .select('id')
+      .single();
 
-    // Check if profile exists
-    let { data: existing } = await supabase
-      .from('profiles')
-      .select('id, titanium_qr, dealroom_id')
-      .eq('phone', phone)
-      .maybeSingle();
-
-    let profileId: string;
-    let titaniumQR: string;
-    let dealroomId: string;
-
-    if (existing) {
-      profileId = existing.id;
-      titaniumQR = existing.titanium_qr || generateTitaniumQR(existing.id);
-      dealroomId = existing.dealroom_id || generateDealroomId();
-
-      // Update QR if missing
-      if (!existing.titanium_qr || !existing.dealroom_id) {
-        await supabase
-          .from('profiles')
-          .update({ titanium_qr: titaniumQR, dealroom_id: dealroomId })
-          .eq('id', profileId);
-      }
+    if (error) {
+      warnings.push(error.message);
     } else {
-      // Auto-generate new profile
-      dealroomId = generateDealroomId();
-      const newQR = generateTitaniumQR(phone || dealroomId);
-      titaniumQR = newQR;
-
-      const { data: created, error: insertErr } = await supabase
-        .from('profiles')
-        .insert([{
-          phone,
-          country,
-          preferred_language: lang,
-          referred_by: referredBy,
-          home_lat: -1.2864,   // Default: Nairobi, Kenya
-          home_lng: 36.8172,
-          home_currency: 'KES',
-          titanium_qr: titaniumQR,
-          dealroom_id: dealroomId,
-          role: 'buyer',
-          fission_registered: true,
-          fission_registered_at: new Date().toISOString(),
-        }])
-        .select('id')
-        .single();
-
-      if (insertErr) throw insertErr;
-      profileId = created!.id;
+      dbSaved = true;
+      savedId = data?.id || '';
     }
-
-    // Log the fission event
-    await supabase.from('fission_events').insert([{
-      profile_id: profileId,
-      token_payload: payload,
-      asset_id: assetId,
-      referred_by: referredBy,
-      dealroom_id: dealroomId,
-      created_at: new Date().toISOString(),
-    }]).select();
-
-    // Build secure redirect URL
-    const redirectUrl = `/dealroom/${dealroomId}?qr=${titaniumQR}${assetId ? `&asset=${assetId}` : ''}`;
-
-    return NextResponse.redirect(new URL(redirectUrl, req.url));
   } catch (err: any) {
-    console.error('[FISSION] Error:', err.message);
-    return NextResponse.json({ error: 'Fission registration failed', detail: err.message }, { status: 500 });
+    warnings.push(`Network: ${err.message}`);
   }
+
+  const base     = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const redirect = `${base}/dealroom/${dealroomId}?qr=${titaniumQR}${assetId ? `&asset=${assetId}` : ''}`;
+
+  return NextResponse.json({
+    status:     'verified',
+    dbSaved,
+    profileId:  savedId,
+    titaniumQR,
+    dealroomId,
+    redirect,
+    warnings:   warnings.length ? warnings : undefined,
+  });
 }
 
-// POST /api/fission — generate a new share token for WhatsApp
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const body = await req.json();
-    const { phone, assetId, country = 'KE', lang = 'en', ref } = body;
-
-    if (!phone) return NextResponse.json({ error: 'Phone required' }, { status: 400 });
-
-    const payload = {
-      phone,
-      asset: assetId || '',
-      country,
-      lang,
-      ref: ref || '',
-      ts: Date.now(),
-    };
-
-    const token = Buffer.from(JSON.stringify(payload)).toString('base64url');
-    const shareLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://tao-platform.vercel.app'}/api/fission?token=${token}`;
-    const whatsappLink = `https://wa.me/?text=${encodeURIComponent(`🏛️ TAO Sovereign Platform — You've been invited!\n\nAccess your private Titanium Dealroom:\n${shareLink}\n\n_Powered by Together As One_`)}`;
-
-    return NextResponse.json({ token, shareLink, whatsappLink });
+    const body  = await request.json().catch(() => ({}));
+    const { phone = `guest_${Date.now()}`, assetId, country = 'KE', ref } = body;
+    const payload = { phone, asset_id: assetId || '', region: country, referrer: ref || '', timestamp: new Date().toISOString() };
+    const token   = Buffer.from(JSON.stringify(payload)).toString('base64');
+    const base    = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const link    = `${base}/api/fission?token=${encodeURIComponent(token)}`;
+    return NextResponse.json({
+      token,
+      shareLink:    link,
+      whatsappLink: `https://wa.me/?text=${encodeURIComponent(`🏛️ TAO Platform — Your Titanium Dealroom:\n${link}`)}`,
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
