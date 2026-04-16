@@ -1,13 +1,17 @@
-import type { NextConfig } from 'next';
+﻿import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    turbopack: {
+      root: '.',
+    },
+  },
+  // Ensure we allow Supabase and external images
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'images.unsplash.com' },
-      { protocol: 'https', hostname: 'rwcbioegrnmhhbmfiutx.supabase.co' },
+      { protocol: 'https', hostname: '**.supabase.co' }
     ],
   },
-  turbopack: {},
 };
 
 export default nextConfig;

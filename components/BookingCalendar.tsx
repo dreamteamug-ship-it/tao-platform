@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect, useMemo } from 'react';
 import { addDays, format, startOfMonth, endOfMonth, startOfWeek, isSameMonth, isSameDay, isWithinInterval, isBefore, parseISO } from 'date-fns';
 import { calculateBookingPrice } from '@/lib/pricingCalculator';
@@ -107,9 +107,9 @@ export default function BookingCalendar({ propertyId, baseRate, onBooked }: Book
     <div style={{ background: 'var(--charcoal)', border: '1px solid var(--border-gold)', borderRadius: 16, overflow: 'hidden' }}>
       {/* Calendar Header */}
       <div style={{ padding: '20px 20px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-gold)' }}>
-        <button onClick={() => setCurrentMonth(m => addDays(startOfMonth(m), -1))} style={{ background: 'none', border: '1px solid var(--border-gold)', color: 'var(--gold)', width: 34, height: 34, borderRadius: 8, cursor: 'pointer', fontSize: '1rem' }}>‹</button>
+        <button onClick={() => setCurrentMonth(m => addDays(startOfMonth(m), -1))} style={{ background: 'none', border: '1px solid var(--border-gold)', color: 'var(--gold)', width: 34, height: 34, borderRadius: 8, cursor: 'pointer', fontSize: '1rem' }}>â€¹</button>
         <h3 style={{ margin: 0, color: 'var(--gold)', fontSize: '1rem' }}>{format(currentMonth, 'MMMM yyyy')}</h3>
-        <button onClick={() => setCurrentMonth(m => addDays(endOfMonth(m), 1))} style={{ background: 'none', border: '1px solid var(--border-gold)', color: 'var(--gold)', width: 34, height: 34, borderRadius: 8, cursor: 'pointer', fontSize: '1rem' }}>›</button>
+        <button onClick={() => setCurrentMonth(m => addDays(endOfMonth(m), 1))} style={{ background: 'none', border: '1px solid var(--border-gold)', color: 'var(--gold)', width: 34, height: 34, borderRadius: 8, cursor: 'pointer', fontSize: '1rem' }}>â€º</button>
       </div>
 
       {/* Day labels */}
@@ -158,7 +158,7 @@ export default function BookingCalendar({ propertyId, baseRate, onBooked }: Book
         <span style={{ color: 'var(--silver)', fontSize: '0.78rem' }}>Tax Region:</span>
         <select value={country} onChange={e => setCountry(e.target.value)} style={{ background: 'var(--deep-blue)', color: 'var(--gold)', border: '1px solid var(--border-gold)', borderRadius: 6, padding: '4px 8px', fontSize: '0.78rem' }}>
           {Object.entries(COUNTRY_TAX_CONFIG).map(([code, cfg]) => (
-            <option key={code} value={code}>{cfg.flag ? cfg.flag + ' ' : ''}{cfg.name} ({(cfg.vat * 100).toFixed(0)}% VAT)</option>
+            <option key={code} value={code}>{(cfg as any).flag ? (cfg as any).flag + ' ' : ''}{cfg.name} ({(cfg.vat * 100).toFixed(0)}% VAT)</option>
           ))}
         </select>
       </div>
@@ -182,11 +182,11 @@ export default function BookingCalendar({ propertyId, baseRate, onBooked }: Book
           </div>
           {pricing.discountPct > 0 && (
             <div style={{ marginTop: 6, color: 'var(--success)', fontSize: '0.8rem', textAlign: 'center' }}>
-              🎉 {pricing.discountPct * 100}% {nights >= 28 ? 'Monthly' : 'Weekly'} discount applied — saving {pricing.currency} {pricing.discountAmount.toLocaleString()}!
+              ðŸŽ‰ {pricing.discountPct * 100}% {nights >= 28 ? 'Monthly' : 'Weekly'} discount applied â€” saving {pricing.currency} {pricing.discountAmount.toLocaleString()}!
             </div>
           )}
           <button className="btn-gold" style={{ width: '100%', marginTop: 14, padding: 12 }} onClick={() => setShowForm(true)}>
-            <i className="fas fa-calendar-check" style={{ marginRight: 8 }} />Book Now — {pricing.currency} {pricing.total.toLocaleString()}
+            <i className="fas fa-calendar-check" style={{ marginRight: 8 }} />Book Now â€” {pricing.currency} {pricing.total.toLocaleString()}
           </button>
         </div>
       )}
@@ -209,12 +209,15 @@ export default function BookingCalendar({ propertyId, baseRate, onBooked }: Book
       {/* Success state */}
       {bookingResult && (
         <div className="receipt-box" style={{ margin: 12, borderRadius: 10 }}>
-          <div style={{ marginBottom: 8, fontWeight: 700 }}>✅ Booking Confirmed!</div>
+          <div style={{ marginBottom: 8, fontWeight: 700 }}>âœ… Booking Confirmed!</div>
           <div style={{ fontSize: '0.82rem', color: 'var(--silver)' }}>
-            {format(startDate || today, 'dd MMM')} → {format(endDate || today, 'dd MMM yyyy')} · {nights} nights
+            {format(startDate || today, 'dd MMM')} â†’ {format(endDate || today, 'dd MMM yyyy')} Â· {nights} nights
           </div>
         </div>
       )}
     </div>
   );
 }
+
+
+

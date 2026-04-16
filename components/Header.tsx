@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { Language } from '@/types';
 
 interface HeaderProps {
@@ -43,7 +43,7 @@ export default function Header({ lang, setLang, currentView, onNavShop, onNavSub
           <i className="fas fa-landmark" style={{ marginRight: 6 }} />Finance
         </a>
         <a href={`/dealroom/${Math.random().toString(36).slice(2,10).toUpperCase()}`}
-          style={{ color: 'var(--silver)', textDecoration: 'none', padding: '6px 12px', fontSize: '0.85rem', borderRadius: 8, border: '1px solid rgba(212,175,55,0.25)', borderRadius: 8 }}>
+          style={{ color: 'var(--silver)', textDecoration: 'none', padding: '6px 12px', fontSize: '0.85rem', borderRadius: 8, border: '1px solid rgba(212,175,55,0.25)' }}>
           <i className="fas fa-video" style={{ marginRight: 6, color: 'var(--gold)' }} />Dealroom
         </a>
         <button onClick={onNavSubscribe}
@@ -54,9 +54,9 @@ export default function Header({ lang, setLang, currentView, onNavShop, onNavSub
         {/* Language Switcher */}
         <select value={lang} onChange={e => setLang(e.target.value as Language)}
           style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid var(--border-gold)', color: 'var(--gold)', padding: '7px 10px', borderRadius: 8, fontSize: '0.82rem', cursor: 'pointer' }}>
-          <option value="en">🌐 ENG</option>
-          <option value="sw">🇰🇪 SW</option>
-          <option value="sh">🔥 SHG</option>
+          <option value="en">ðŸŒ ENG</option>
+          <option value="sw">ðŸ‡°ðŸ‡ª SW</option>
+          <option value="sh">ðŸ”¥ SHG</option>
         </select>
 
         {/* CTO Login */}
@@ -68,3 +68,4 @@ export default function Header({ lang, setLang, currentView, onNavShop, onNavSub
     </header>
   );
 }
+
