@@ -1,32 +1,24 @@
-import type { Metadata } from 'next';
 import './globals.css';
+import NavigationOverlay from '@/components/NavigationOverlay';
+import AmandaSuperMax from '@/components/AmandaSuperMax';
 
-export const metadata: Metadata = {
-  title: 'Together As One | Sovereign Real Estate Nexus',
-  description: 'Kenya\'s premier AI-powered real estate marketplace. Buy, sell, lease, and finance properties with GPS tracking, KYC verification, and smart escrow.',
-  keywords: 'Kenya real estate, Nairobi property, mortgage Kenya, land for sale Nairobi, Airbnb Kenya',
-  openGraph: {
-    title: 'Together As One | Sovereign Real Estate Nexus',
-    description: 'Kenya\'s premier AI-powered real estate marketplace',
-    type: 'website',
-  },
+export const metadata = {
+  title: 'Wonderland Hospitality - Sovereign Asset Nexus',
+  description: 'The 26-country SADC/EA Transaction Fortress',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;600;800&family=Share+Tech+Mono&family=Lato:wght@300;400;700&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-        />
-      </head>
-      <body><main style={{ paddingTop: '80px', minHeight: '100vh' }}>{children}</main></body>
+      <body className="bg-[#050505] text-white">
+        {/* Universal Home/Back Buttons */}
+        <NavigationOverlay />
+        
+        {children}
+
+        {/* Multi-LLM Infused Amanda Agent */}
+        <AmandaSuperMax />
+      </body>
     </html>
   );
 }
-
