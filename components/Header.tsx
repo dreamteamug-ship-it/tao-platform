@@ -33,14 +33,18 @@ export default function Header({ lang, setLang, currentView, onNavShop, onNavSub
           style={{ background: 'none', border: 'none', color: currentView === 'shop' ? 'var(--gold)' : 'var(--silver)', cursor: 'pointer', padding: '6px 12px', borderRadius: 8, fontSize: '0.85rem', fontWeight: currentView === 'shop' ? 700 : 400 }}>
           <i className="fas fa-store" style={{ marginRight: 6 }} />Shop
         </button>
+        <a href="/vehicles" style={{ color: 'var(--silver)', textDecoration: 'none', padding: '6px 12px', fontSize: '0.85rem', borderRadius: 8 }}>
+          <i className="fas fa-car" style={{ marginRight: 6 }} />Vehicles
+        </a>
         <a href="/services" style={{ color: 'var(--silver)', textDecoration: 'none', padding: '6px 12px', fontSize: '0.85rem', borderRadius: 8 }}>
           <i className="fas fa-users" style={{ marginRight: 6 }} />Services
         </a>
-        <a href="/pricing" style={{ color: 'var(--silver)', textDecoration: 'none', padding: '6px 12px', fontSize: '0.85rem', borderRadius: 8 }}>
-          <i className="fas fa-tags" style={{ marginRight: 6 }} />Pricing
-        </a>
         <a href="/finance/mortgage" style={{ color: 'var(--silver)', textDecoration: 'none', padding: '6px 12px', fontSize: '0.85rem', borderRadius: 8 }}>
           <i className="fas fa-landmark" style={{ marginRight: 6 }} />Finance
+        </a>
+        <a href={`/dealroom/${Math.random().toString(36).slice(2,10).toUpperCase()}`}
+          style={{ color: 'var(--silver)', textDecoration: 'none', padding: '6px 12px', fontSize: '0.85rem', borderRadius: 8, border: '1px solid rgba(212,175,55,0.25)', borderRadius: 8 }}>
+          <i className="fas fa-video" style={{ marginRight: 6, color: 'var(--gold)' }} />Dealroom
         </a>
         <button onClick={onNavSubscribe}
           style={{ color: '#fff', background: 'linear-gradient(135deg, #0a4f2a, #1a7a3f)', border: 'none', padding: '8px 14px', borderRadius: 10, cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}>
