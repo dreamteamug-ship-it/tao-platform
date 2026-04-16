@@ -1,0 +1,1 @@
+export const settlements = { DJ: 'MPESA_DJ', KE: '400200', ZA: 'STRIPE_ZA', CHINA: 'YABAND_1806777590' };
