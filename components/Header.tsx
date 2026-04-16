@@ -31,7 +31,7 @@ export default function Header({ lang, setLang, currentView, onNavShop, onNavSub
       alignItems: 'center'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-        <h1 style={{ color: '#d4af37', margin: 0, fontSize: '1.5rem', fontWeight: '900', letterSpacing: '-0.05em' }}>
+        <h1 onClick={() => window.location.href = "/"} style={{ cursor: "pointer", color: "#d4af37", margin: 0, fontSize: "1.5rem", fontWeight: "900", letterSpacing: "-0.05em" }}>
           WONDERLAND HOSPITALITY
         </h1>
         

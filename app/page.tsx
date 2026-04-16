@@ -1,187 +1,115 @@
 'use client';
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
-import PropertyGrid from '@/components/PropertyGrid';
-import ProviderDash from '@/components/ProviderDash';
-import CommandCenter from '@/components/CommandCenter';
-import ProductDashboard from '@/components/ProductDashboard';
-import FinanceModal from '@/components/FinanceModal';
-import CTOLoginModal from '@/components/CTOLoginModal';
-import { Property, Language } from '@/types';
+import MarketHeatMap from '@/components/MarketHeatMap';
+import SwarmStatus from '@/components/SwarmStatus';
 
-type View = 'shop' | 'subscribe' | 'cc';
+type Category = 'real-estate' | 'vehicles' | 'services' | 'wonderland';
 
-// Generate local seed properties (fallback when Supabase not populated)
-function generateProperties(): Property[] {
-  const cats: Property['category'][] = ['Residential', 'Commercial', 'Land', 'Airbnb'];
-  const imgs = {
-    Residential: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=75',
-    Commercial: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=75',
-    Land: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=600&q=75',
-    Airbnb: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=75',
-  };
-  return Array.from({ length: 100 }, (_, i) => {
-    const cat = cats[Math.floor(Math.random() * cats.length)];
-    const price = cat === 'Land' ? Math.floor(Math.random() * 50000000) + 1000000 : Math.floor(Math.random() * 90000000) + 10000000;
-    const txPool = ['buy', 'rent', 'lease', 'tradein'];
-    const txCount = Math.floor(Math.random() * 2) + 1;
-    const transactions = txPool.slice(0, txCount);
-    return {
-      id: `TAO-${1000 + i + 1}`,
-      category: cat,
-      title: `${cat} Property ${i + 1}`,
-      price,
-      image_url: imgs[cat],
-      gps_active: Math.random() > 0.2,
-      lat: -1.2864 + (Math.random() - 0.5) * 0.2,
-      lng: 36.8172 + (Math.random() - 0.5) * 0.2,
-      agent: `Agent ${Math.floor(Math.random() * 9) + 1}`,
-      verified: Math.random() > 0.25,
-      share_unlock: false,
-      bedrooms: Math.floor(Math.random() * 5) + 1,
-      bathrooms: Math.floor(Math.random() * 3) + 1,
-      land_size: Math.floor(Math.random() * 200) + 50,
-      year_built: 2000 + Math.floor(Math.random() * 24),
-      transactions,
-    };
-  });
-}
+export default function WonderlandLanding() {
+  const [category, setCategory] = useState<Category>('real-estate');
+  const [showFission, setShowFission] = useState(false);
+  const [hasShared, setHasShared] = useState(false);
 
-export default function HomePage() {
-  const [view, setView] = useState<View>('shop');
-  const [lang, setLang] = useState<Language>('en');
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [financeType, setFinanceType] = useState('');
-  const [financePropertyId, setFinancePropertyId] = useState('');
-  const [showCTOLogin, setShowCTOLogin] = useState(false);
-  const [category, setCategory] = useState('All');
-  const [sortOrder, setSortOrder] = useState('default');
-  const [transFilter, setTransFilter] = useState('all');
-
-  // Load properties from Supabase, fallback to local seed
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/properties?category=${category}&sort=${sortOrder}&transaction=${transFilter}`);
-        const data = await res.json();
-        if (data.properties && data.properties.length > 0) {
-          setProperties(data.properties);
-        } else {
-          // Use local seed with localStorage persistence for share unlock
-          const saved = localStorage.getItem('tao_properties');
-          if (saved) {
-            setProperties(JSON.parse(saved));
-          } else {
-            const generated = generateProperties();
-            localStorage.setItem('tao_properties', JSON.stringify(generated));
-            setProperties(generated);
-          }
-        }
-      } catch {
-        const saved = localStorage.getItem('tao_properties');
-        if (saved) setProperties(JSON.parse(saved));
-        else {
-          const generated = generateProperties();
-          localStorage.setItem('tao_properties', JSON.stringify(generated));
-          setProperties(generated);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [category, sortOrder, transFilter]);
-
-  const handleShareUnlock = useCallback((id: string) => {
-    setProperties(prev => {
-      const updated = prev.map(p => p.id === id ? { ...p, share_unlock: true } : p);
-      localStorage.setItem('tao_properties', JSON.stringify(updated));
-      return updated;
-    });
+    const shared = localStorage.getItem('wonderland_shared');
+    if (shared) setHasShared(true);
   }, []);
 
-  const handleOpenFinance = (type: string, propertyId: string) => {
-    setFinanceType(type);
-    setFinancePropertyId(propertyId);
-    setSelectedProperty(null);
+  const handleCategoryChange = (newCat: Category) => {
+    if (!hasShared && newCat !== 'real-estate') {
+      setShowFission(true);
+    } else {
+      setCategory(newCat);
+    }
   };
 
-  const handleCCLogin = () => {
-    setShowCTOLogin(true);
+  const completeFission = () => {
+    const waUrl = 'https://wa.me/?text=' + encodeURIComponent('Checking out the 26-country asset crawl on Wonderland Hospitality!');
+    window.open(waUrl, '_blank');
+    localStorage.setItem('wonderland_shared', 'true');
+    setHasShared(true);
+    setShowFission(false);
   };
 
-  const handleCTOSuccess = () => {
-    setShowCTOLogin(false);
-    setView('cc');
-  };
-
-  const handleCTOCancel = () => {
-    setShowCTOLogin(false);
-    setView('shop');
-  };
-
+    useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // SHIFT + A (Admin) to enter the Machinery
+      if (e.shiftKey && e.key === 'A') {
+        window.location.href = '/admin/dashboard';
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   return (
-    <>
-      <Header
-        lang={lang}
-        setLang={setLang}
-        currentView={view}
-        onNavShop={() => setView('shop')}
-        onNavSubscribe={() => setView('subscribe')}
-        onNavCC={handleCCLogin}
+    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-yellow-500/30">
+      <Header 
+        lang="KE" 
+        setLang={() => {}} 
+        currentView={category}
+        onNavShop={() => setCategory('real-estate')}
+        onNavSubscribe={() => setCategory('wonderland')}
+        onNavCC={() => {}} 
       />
 
-      {view === 'shop' && (
-        <PropertyGrid
-          lang={lang}
-          properties={properties}
-          loading={loading}
-          category={category}
-          setCategory={setCategory}
-          sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
-          transFilter={transFilter}
-          setTransFilter={setTransFilter}
-          onOpenDashboard={setSelectedProperty}
-          onShareUnlock={handleShareUnlock}
-        />
-      )}
+      <main className="max-w-7xl mx-auto px-6 py-12">
+        {/* Category Selector */}
+        <nav className="flex gap-8 mb-12 border-b border-white/5 pb-4 overflow-x-auto no-scrollbar">
+          {['real-estate', 'vehicles', 'services', 'wonderland'].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => handleCategoryChange(cat as Category)}
+              className={`text-xs font-black tracking-tighter uppercase transition-all ${
+                category === cat ? 'text-yellow-500 scale-110' : 'text-gray-500 hover:text-white'
+              }`}
+            >
+              {cat.replace('-', ' ')}
+            </button>
+          ))}
+        </nav>
 
-      {view === 'subscribe' && (
-        <ProviderDash lang={lang} />
-      )}
+        {/* Dynamic Content Area */}
+        <section className="space-y-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+              <div className="h-[400px] bg-gradient-to-br from-[#111] to-[#050505] border border-white/5 rounded-[2rem] p-12 flex flex-col justify-end relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-full bg-[url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80')] bg-cover opacity-20 group-hover:scale-105 transition-transform duration-700" />
+                <h2 className="text-5xl font-black tracking-tighter relative z-10 uppercase italic">
+                  {category.replace('-', ' ')} <br/> <span className="text-yellow-500">26 Hubs Online.</span>
+                </h2>
+              </div>
+              <MarketHeatMap />
+            </div>
+            
+            <aside className="space-y-6">
+              <SwarmStatus />
+              <div className="p-8 bg-yellow-500 rounded-[2rem] text-black">
+                <h4 className="font-black italic text-xl mb-2 underline">SOVEREIGN DEALROOM</h4>
+                <p className="text-xs font-bold leading-tight">Instant Tri-Lock Escrow active for regional asset transfers.</p>
+              </div>
+            </aside>
+          </div>
+        </section>
+      </main>
 
-      {view === 'cc' && (
-        <CommandCenter properties={properties} />
+      {/* WhatsApp Fission Gate Modal */}
+      {showFission && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-xl p-6">
+          <div className="max-w-md w-full bg-[#111] border border-yellow-500/20 p-10 rounded-[3rem] text-center space-y-6">
+            <div className="text-4xl">🚀</div>
+            <h3 className="text-2xl font-black italic">UNLOCK THE SWARM</h3>
+            <p className="text-gray-400 text-sm">Share Wonderland Hospitality to your WhatsApp status to unlock Vehicles, Services, and the 26-country Arbitrage Hub.</p>
+            <button 
+              onClick={completeFission}
+              className="w-full py-4 bg-yellow-500 text-black font-black rounded-full hover:bg-yellow-400 transition-colors"
+            >
+              SHARE & UNLOCK
+            </button>
+            <button onClick={() => setShowFission(false)} className="text-[10px] text-gray-600 uppercase tracking-widest font-bold">Maybe Later</button>
+          </div>
+        </div>
       )}
-
-      {selectedProperty && (
-        <ProductDashboard
-          property={selectedProperty}
-          lang={lang}
-          onClose={() => setSelectedProperty(null)}
-          onOpenFinance={handleOpenFinance}
-        />
-      )}
-
-      {financeType && (
-        <FinanceModal
-          financeType={financeType}
-          propertyId={financePropertyId}
-          onClose={() => setFinanceType('')}
-        />
-      )}
-
-      {showCTOLogin && (
-        <CTOLoginModal
-          onSuccess={handleCTOSuccess}
-          onCancel={handleCTOCancel}
-        />
-      )}
-    </>
+    </div>
   );
 }
