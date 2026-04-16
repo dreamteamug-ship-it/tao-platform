@@ -8,37 +8,22 @@ export async function GET(request: Request) {
     if (!token) return NextResponse.json({ error: 'Missing token' }, { status: 400 });
 
     const payload = JSON.parse(Buffer.from(token, 'base64').toString());
-    const dealroomId = Math.random().toString(36).substring(2, 10).toUpperCase() + 
-                       Math.random().toString(36).substring(2, 4).toUpperCase();
+    const dealroomId = `DR-${Math.random().toString(36).substring(2, 7).toUpperCase()}-${payload.region || 'KE'}`;
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
-    // 🏛️ SOVEREIGN BRIDGE: Prime the ledger
-    // This ensures the ID exists before the Equity Webhook fires
-    const { error: txError } = await supabase.from('escrow_transactions').insert([{ 
-      id: dealroomId, 
-      status: 'PENDING',
-      amount: 0, 
-      region: payload.region || 'KE'
-    }]);
-
-    if (txError) {
-       console.error('❌ [DB_PRIME_ERROR]:', txError.message);
-       // If the table doesn't exist, we still want the ID for the UI
-    }
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+    
+    // Non-blocking insert to prevent 500s on DB lag
+    supabase.from('escrow_transactions').insert([{ 
+      id: dealroomId, status: 'PENDING', region: payload.region || 'KE', asset_id: 'GHOST-INIT' 
+    }]).then(({ error }) => { if (error) console.error('DB_LAG:', error.message); });
 
     return NextResponse.json({
       success: true,
       dealroomId,
       region: payload.region,
-      timestamp: new Date().toISOString()
+      mode: 'SOVEREIGN'
     });
-
   } catch (err: any) {
-    console.error('💥 [FISSION_CRASH]:', err.message);
-    return NextResponse.json({ error: 'Engine Mismatch', details: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Engine Error', details: err.message }, { status: 500 });
   }
 }
