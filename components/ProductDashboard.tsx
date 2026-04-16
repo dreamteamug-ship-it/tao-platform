@@ -1,135 +1,132 @@
 'use client';
-import { Property, Language } from '@/types';
+import dynamic from 'next/dynamic';
+import { Property } from '@/types';
+import { calculateBookingPrice } from '@/lib/pricingCalculator';
+
+const BookingCalendar = dynamic(() => import('@/components/BookingCalendar'), { ssr: false });
 
 interface ProductDashboardProps {
   property: Property;
-  lang: Language;
+  lang: string;
   onClose: () => void;
   onOpenFinance: (type: string, propertyId: string) => void;
 }
 
-const FINANCE_OPTIONS = ['Mortgage', 'Construction Loan', 'Bridge Finance', 'Equity Release', 'Development Finance'];
-
 export default function ProductDashboard({ property, lang, onClose, onOpenFinance }: ProductDashboardProps) {
-  const investmentScore = Math.floor(Math.random() * 25) + 73;
+  const isAirbnb = property.category === 'Airbnb';
+  const nightlyRate = Math.floor(property.price / 30);
 
   return (
-    <div
-      className="modal-overlay open"
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Property details: ${property.title}`}
-      onClick={e => e.target === e.currentTarget && onClose()}
-      id="product-modal"
-    >
-      <div className="modal-card">
+    <div className="modal-overlay open" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal-card" style={{ maxWidth: 760, maxHeight: '90vh', overflowY: 'auto' }}>
+        {/* Header */}
         <div className="modal-header">
-          <h2 style={{ margin: 0, fontSize: '1.7rem' }}>{property.title}</h2>
-          <button
-            className="btn-outline"
-            style={{ borderColor: 'var(--danger)', color: 'var(--danger)', padding: '6px 16px' }}
-            onClick={onClose}
-            id="btn-close-product-modal"
-            aria-label="Close property details"
-          >
-            <i className="fas fa-times" /> Close
-          </button>
-        </div>
-
-        {/* Media */}
-        <div className="dash-media-box">
-          <img src={property.image_url} alt={property.title} loading="lazy" />
-          <div className="media-badge">
-            <i className="fas fa-vr-cardboard" aria-hidden="true" /> 4K / 360° Virtual Tour
-          </div>
-        </div>
-
-        {/* Price + Escrow */}
-        <div className="price-row">
-          <p className="price-display">KES {property.price.toLocaleString()}</p>
-          <button
-            className="btn-gold"
-            style={{ padding: '13px 28px', fontSize: '0.95rem' }}
-            onClick={() => alert('Smart Escrow initiated with AI Agent. You will receive a secure contract link within 2 hours.')}
-            id="btn-smart-escrow"
-          >
-            <i className="fas fa-shield-alt" /> Smart Escrow
-          </button>
-        </div>
-
-        {/* Status Grid */}
-        <div className="status-grid">
-          <div className={`status-item ${property.verified ? 'verified' : 'unverified'}`}>
-            <i className="fas fa-check-circle fa-lg" aria-hidden="true" />
-            <div>
-              <strong>KYC Status</strong>
-              <span>{property.verified ? 'Approved' : 'Pending Review'}</span>
-            </div>
-          </div>
-          <div className={`status-item ${property.gps_active ? 'verified' : 'unverified'}`}>
-            <i className="fas fa-satellite-dish fa-lg" aria-hidden="true" />
-            <div>
-              <strong>Telemetry</strong>
-              <span>{property.gps_active ? 'Live GPS Active' : 'GPS Offline'}</span>
-            </div>
-          </div>
-          <div className="status-item verified">
-            <i className="fas fa-chart-line fa-lg" aria-hidden="true" />
-            <div>
-              <strong>AI Investment Score</strong>
-              <span style={{ color: investmentScore >= 85 ? 'var(--success)' : 'var(--gold)' }}>{investmentScore}%</span>
-            </div>
-          </div>
-          <div className="status-item verified">
-            <i className="fas fa-calendar fa-lg" aria-hidden="true" />
-            <div>
-              <strong>Year Built</strong>
-              <span>{property.year_built}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="dash-narration">
-          <strong>{property.category}</strong> property featuring{' '}
-          <strong>{property.bedrooms} bedrooms</strong> and{' '}
-          <strong>{property.bathrooms} bathrooms</strong> on{' '}
-          <strong>{property.land_size} sqm</strong>. Built in {property.year_built}.
-          Located in a prime Nairobi neighborhood. Verified title deed ready for transfer.
-          Energy-efficient design with smart home integration and 24/7 security. Managed by{' '}
-          <strong>{property.agent}</strong> — an AI-verified professional on the TAO Nexus.
-        </div>
-
-        {/* Agent */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '10px 0 20px', padding: '14px', background: 'rgba(0,0,0,0.2)', borderRadius: 10 }}>
-          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold), var(--gold-dark, #B8860B))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--deep-blue)', fontWeight: 700, fontSize: '1.1rem' }}>
-            {property.agent?.charAt(0) || 'A'}
-          </div>
           <div>
-            <div style={{ fontWeight: 600 }}>{property.agent}</div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--silver)' }}>
-              <i className="fas fa-check-circle" style={{ color: '#1DA1F2' }} /> TAO Verified Agent &nbsp;·&nbsp;
-              <a href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=Hi, I'm interested in ${property.title}`}
-                style={{ color: 'var(--success)', textDecoration: 'none' }} target="_blank" rel="noopener noreferrer">
-                <i className="fab fa-whatsapp" /> WhatsApp
+            <span className="card-category" style={{ marginRight: 10 }}>{property.category}</span>
+            <h2 style={{ margin: '4px 0 0', fontSize: '1.2rem' }}>{property.title}</h2>
+          </div>
+          <button className="btn-outline" style={{ borderColor: 'var(--danger)', color: 'var(--danger)', padding: '5px 12px' }} onClick={onClose}>✕</button>
+        </div>
+
+        {/* Image */}
+        <div style={{ position: 'relative', height: 220, overflow: 'hidden', borderRadius: 12, margin: '0 20px 16px' }}>
+          <img src={property.image_url || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800'} alt={property.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%)' }} />
+          <div style={{ position: 'absolute', bottom: 14, left: 14 }}>
+            <span style={{ color: 'var(--gold)', fontFamily: "'Cinzel', serif", fontSize: '1.5rem', fontWeight: 700 }}>
+              KSh {property.price.toLocaleString()}
+            </span>
+            {isAirbnb && <span style={{ color: 'var(--silver)', fontSize: '0.82rem', marginLeft: 6 }}>≈ KSh {nightlyRate.toLocaleString()}/night</span>}
+          </div>
+          {property.gps_active && (
+            <div style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,200,100,0.2)', border: '1px solid var(--success)', borderRadius: 20, padding: '4px 10px', color: 'var(--success)', fontSize: '0.72rem', fontWeight: 600 }}>
+              <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--success)', marginRight: 5, animation: 'pulse 1.5s infinite' }} />
+              GPS LIVE
+            </div>
+          )}
+        </div>
+
+        <div style={{ padding: '0 20px 20px', display: 'grid', gridTemplateColumns: isAirbnb ? '1fr 1fr' : '1fr', gap: 20 }}>
+          {/* Left column — details */}
+          <div>
+            {/* Property Stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
+              {[
+                { icon: 'fa-bed', label: 'Beds', val: property.bedrooms || '—' },
+                { icon: 'fa-bath', label: 'Baths', val: property.bathrooms || '—' },
+                { icon: 'fa-ruler-combined', label: 'Size', val: `${property.land_size || '—'}m²` },
+              ].map(s => (
+                <div key={s.label} style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid var(--border-gold)', borderRadius: 10, padding: '10px', textAlign: 'center' }}>
+                  <i className={`fas ${s.icon}`} style={{ color: 'var(--gold)', fontSize: '1rem', display: 'block', marginBottom: 4 }} />
+                  <div style={{ color: '#fff', fontWeight: 700 }}>{s.val}</div>
+                  <div style={{ color: 'var(--silver)', fontSize: '0.72rem' }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Agent & Verification */}
+            <div style={{ marginBottom: 20 }}>
+              {property.agent && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontWeight: 700 }}>
+                    {property.agent[0]}
+                  </div>
+                  <div>
+                    <div style={{ color: '#fff', fontSize: '0.88rem' }}>{property.agent}</div>
+                    <div style={{ color: 'var(--silver)', fontSize: '0.74rem' }}>Licensed TAO Agent</div>
+                  </div>
+                  {property.verified && <span style={{ marginLeft: 'auto', color: 'var(--success)', fontSize: '0.74rem' }}>✓ Verified</span>}
+                </div>
+              )}
+            </div>
+
+            {/* Finance / Action Buttons */}
+            {!isAirbnb && (
+              <div>
+                <h4 style={{ color: 'var(--gold)', marginBottom: 12, fontSize: '0.9rem' }}>
+                  <i className="fas fa-landmark" style={{ marginRight: 8 }} />Property Finance
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {[
+                    { key: 'mortgage', label: 'Mortgage', icon: 'fa-home' },
+                    { key: 'equity', label: 'Equity Release', icon: 'fa-unlock-alt' },
+                    { key: 'construction', label: 'Construction', icon: 'fa-hard-hat' },
+                    { key: 'bridging', label: 'Bridging Loan', icon: 'fa-bridge' },
+                  ].map(ft => (
+                    <a key={ft.key} href={`/finance/${ft.key}`}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'rgba(212,175,55,0.08)', border: '1px solid var(--border-gold)', borderRadius: 10, color: 'var(--silver)', fontSize: '0.82rem', textDecoration: 'none', transition: 'all 0.2s' }}>
+                      <i className={`fas ${ft.icon}`} style={{ color: 'var(--gold)' }} />
+                      {ft.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* WhatsApp Contact */}
+            <div style={{ marginTop: 16 }}>
+              <a href={`https://wa.me/254718554383?text=Hi, I'm interested in ${property.title} (${property.id})`}
+                target="_blank" rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px', background: '#25D366', color: '#fff', borderRadius: 10, textDecoration: 'none', fontWeight: 700 }}>
+                <i className="fab fa-whatsapp" style={{ fontSize: '1.2rem' }} />
+                Contact Agent on WhatsApp
               </a>
             </div>
           </div>
-        </div>
 
-        {/* Finance Options */}
-        <h3 className="section-heading">Micro-Finance Solutions</h3>
-        <div className="finance-tags">
-          {FINANCE_OPTIONS.map(opt => (
-            <button
-              key={opt}
-              className="fin-tag"
-              onClick={() => { onOpenFinance(opt, property.id); onClose(); }}
-              id={`fin-${opt.replace(/\s+/g, '-').toLowerCase()}`}
-            >
-              <i className="fas fa-hand-holding-usd" style={{ marginRight: 6 }} />{opt}
-            </button>
-          ))}
+          {/* Right column — Booking Calendar for Airbnb */}
+          {isAirbnb && (
+            <div>
+              <h4 style={{ color: 'var(--gold)', marginBottom: 12, fontSize: '0.9rem' }}>
+                <i className="fas fa-calendar-alt" style={{ marginRight: 8 }} />Book Your Stay
+              </h4>
+              <BookingCalendar
+                propertyId={property.id}
+                baseRate={nightlyRate}
+                onBooked={(data) => console.log('Booked:', data)}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
