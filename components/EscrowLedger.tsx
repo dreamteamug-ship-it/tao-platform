@@ -1,5 +1,5 @@
 'use client';
-export default function EscrowLedger({ transactions = [] }: { transactions: any[] }) {
+export default function EscrowLedger({ transactions = [] }: { transactions?: any[] }) {
   return (
     <div className="space-y-4">
       {transactions.length === 0 ? <p className="text-silver italic">No pending settlements...</p> :
